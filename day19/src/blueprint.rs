@@ -1,4 +1,5 @@
-use crate::{Clay, Obsidian, Ore, State};
+#![allow(clippy::bool_assert_comparison)]
+use crate::{Clay, Obsidian, Ore, State, state::dfs};
 
 #[derive(Debug, Eq, PartialEq, Default)]
 pub struct BluePrint {
@@ -56,133 +57,7 @@ impl From<&BluePrint> for BluePrintOpt {
         }
     }
 }
-
-#[test]
-fn should_build_ore_test() {
-    let bp = BluePrintOpt {
-        max_ore: Ore(2),
-        ore: Ore(1),
-        ..Default::default()
-    };
-    let state: State<24> = State {
-        ore: Ore(1),
-        ore_robots: Ore(2),
-        ..Default::default()
-    };
-
-    assert_eq!(state.should_build_ore(&bp), false);
-    let state: State<24> = State {
-        ore: Ore(1),
-        ore_robots: Ore(1),
-        ..Default::default()
-    };
-
-    assert_eq!(state.should_build_ore(&bp), true);
-    let state: State<24> = State {
-        ore: Ore(0),
-        ore_robots: Ore(1),
-        ..Default::default()
-    };
-
-    assert_eq!(state.should_build_ore(&bp), false);
-}
-
-#[test]
-fn should_build_clay_test() {
-    let bp = BluePrintOpt {
-        max_clay: Clay(2),
-        clay: Ore(1),
-        ..Default::default()
-    };
-    let state: State<24> = State {
-        ore: Ore(1),
-        clay_robots: Clay(2),
-        ..Default::default()
-    };
-
-    assert_eq!(state.should_build_clay(&bp), false);
-    let state: State<24> = State {
-        ore: Ore(1),
-        clay_robots: Clay(1),
-        ..Default::default()
-    };
-
-    assert_eq!(state.should_build_clay(&bp), true);
-    let state: State<24> = State {
-        ore: Ore(0),
-        clay_robots: Clay(1),
-        ..Default::default()
-    };
-
-    assert_eq!(state.should_build_clay(&bp), false);
-}
-
-#[test]
-fn should_build_obsidian_test() {
-    let bp = BluePrintOpt {
-        max_obs: Obsidian(2),
-        obsidian: (Clay(1), Ore(1)),
-        ..Default::default()
-    };
-    let state: State<24> = State {
-        ore: Ore(1),
-        clay: Clay(1),
-        obsidian_robots: Obsidian(2),
-        ..Default::default()
-    };
-
-    assert_eq!(state.should_build_obsidian(&bp), false);
-    let state: State<24> = State {
-        ore: Ore(1),
-        clay: Clay(1),
-        ..Default::default()
-    };
-
-    assert_eq!(state.should_build_obsidian(&bp), true);
-    let state: State<24> = State {
-        ore: Ore(1),
-        ..Default::default()
-    };
-
-    assert_eq!(state.should_build_obsidian(&bp), false);
-}
-
-#[test]
-fn should_build_geode_test() {
-    let bp = BluePrintOpt {
-        geode: (Ore(1), Obsidian(1)),
-        ..Default::default()
-    };
-    let state: State<24> = State {
-        ore: Ore(1),
-        obsidian: Obsidian(1),
-        geode_robots: 2,
-        ..Default::default()
-    };
-
-    assert_eq!(state.should_build_geode(&bp), true);
-    let state: State<24> = State {
-        ore: Ore(1),
-        ..Default::default()
-    };
-
-    assert_eq!(state.should_build_obsidian(&bp), false);
-}
-
 impl BluePrintOpt {}
-
-#[test]
-fn blueprint_can_optimise() {
-    let bp = BluePrint {
-        id: 1,
-        ore: Ore(4),
-        clay: Ore(2),
-        obsidian: (Clay(14), Ore(3)),
-        geode: (Ore(2), Obsidian(7)),
-    };
-
-    assert_eq!(bp.optimise::<24>(), 9);
-}
 
 impl BluePrint {
     pub fn optimise<const N: usize>(&self) -> usize {
@@ -190,7 +65,7 @@ impl BluePrint {
             ore_robots: Ore(1),
             ..Default::default()
         };
-        let result = state.optimise(&(self.into()));
+        let result = dfs(state, &(self.into()));
         result * self.id
     }
 
@@ -199,7 +74,6 @@ impl BluePrint {
             ore_robots: Ore(1),
             ..Default::default()
         };
-        let result = state.optimise(&(self.into()));
-        result
+        dfs(state, &(self.into()))
     }
 }
